@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>thynC™ 계약현황 대시보드 2026년 03월 기준</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --surface2: #f0f4f8;
+    --border: #dde3ed;
+    --accent: #1a6fd8;
+    --accent2: #0d52a8;
+    --gold: #c8860a;
+    --green: #14a85a;
+    --red: #d93251;
+    --text: #1a2340;
+    --text-muted: #6b7c99;
+    --상급: #b07800;
+    --종합: #1a6fd8;
+    --병원: #0f9e52;
+    --grade-A: #0f9e52;
+    --grade-B: #1a6fd8;
+    --grade-C: #c8860a;
+    --grade-D: #d93251;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #ffffff 0%, #eef3fb 100%);
+    border-bottom: 1px solid #dde3ed;
+    padding: 20px 24px 16px;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+  .header-inner { max-width: 1400px; margin: 0 auto; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(22px, 4vw, 32px);
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-shadow: none;
+  }
+  .logo span { color: var(--text-muted); font-size: 0.55em; letter-spacing: 1px; display: block; font-family: 'Noto Sans KR', sans-serif; font-weight: 300; margin-top: -4px; }
+  .header-kpi { display: flex; gap: 20px; flex-wrap: wrap; }
+  .kpi-chip {
+    background: #eef3fb;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: #5a6a85;
+  }
+  .kpi-chip strong { color: var(--accent); font-size: 15px; display: block; }
+
+  /* ── TAB NAV (상위 뎁스) ── */
+  .tab-nav {
+    max-width: 1400px; margin: 20px auto 0; padding: 0 24px;
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .tab-btn {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px; font-weight: 700;
+    padding: 10px 22px;
+    border: 1.5px solid var(--border);
+    border-radius: 50px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    letter-spacing: 0.5px;
+  }
+  .tab-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .tab-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    box-shadow: 0 0 16px rgba(0,200,255,0.35);
+  }
+  .tab-btn.tab-overview.active { background: var(--gold); border-color: var(--gold); color: #fff; box-shadow: 0 0 8px rgba(200,134,10,0.2); }
+  .tab-btn.tab-revenue.active  { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tab-btn.tab-util.active    { background: var(--green); border-color: var(--green); color: #fff; box-shadow: 0 0 8px rgba(14,168,90,0.2); }
+  .tab-btn.tab-device.active  { background: #7c5cbf; border-color: #7c5cbf; color: #fff; box-shadow: 0 0 8px rgba(124,92,191,0.2); }
+
+  /* ── FILTER BAR (종별 구분) ── */
+  .filter-bar {
+    max-width: 1400px; margin: 14px auto 0; padding: 0 24px;
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  }
+  .filter-label { font-size: 11px; color: var(--text-muted); margin-right: 4px; }
+  .filter-btn {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px; font-weight: 500;
+    padding: 6px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-btn:hover { border-color: #3a4a64; color: var(--text); }
+  .filter-btn.active[data-filter="전체"] { background: #e8eef8; border-color: #aabbd6; color: var(--text); }
+  .filter-btn.active[data-filter="상급"] { background: #fff8e6; border-color: var(--상급); color: var(--상급); }
+  .filter-btn.active[data-filter="종합"] { background: #e6f1fb; border-color: var(--종합); color: var(--종합); }
+  .filter-btn.active[data-filter="병원"] { background: #e6f8ee; border-color: var(--병원); color: var(--병원); }
+
+  /* ── MAIN CONTENT ── */
+  .main { max-width: 1400px; margin: 20px auto; padding: 0 24px 60px; }
+
+  /* ── OVERVIEW PANEL ── */
+  .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .ov-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    position: relative; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .ov-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+  .ov-card::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 4px; height: 100%;
+  }
+  .ov-card.total::before { background: var(--accent); }
+  .ov-card.sang::before  { background: var(--상급); }
+  .ov-card.jong::before  { background: var(--종합); }
+  .ov-card.byung::before { background: var(--병원); }
+  .ov-card.local::before { background: #9ca3af; }
+  .ov-label { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; }
+  .ov-count { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .ov-count strong { font-size: 28px; font-weight: 900; color: var(--text); }
+  .ov-sub { font-size: 11px; color: var(--text-muted); margin-top: 6px; display: flex; flex-direction: column; gap: 2px; }
+  .ov-sub span { display: flex; justify-content: space-between; }
+  .ov-sub em { color: var(--text); font-style: normal; font-weight: 500; }
+
+  /* ── DONUT + BARS ── */
+  .overview-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  @media (max-width: 700px) { .overview-charts { grid-template-columns: 1fr; } }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+  .chart-title { font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 18px; text-transform: uppercase; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 12px; }
+  .bar-label { width: 36px; color: var(--text-muted); text-align: right; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+  .bar-val { width: 80px; text-align: right; color: var(--text); font-weight: 500; flex-shrink: 0; font-size: 11px; }
+  svg.donut { display: block; margin: 0 auto 16px; }
+  .donut-legend { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+  .donut-leg-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+  .donut-leg-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ── TABLE ── */
+  .table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .table-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .table-count { font-size: 12px; color: var(--text-muted); }
+  .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    padding: 12px 14px;
+    text-align: left; white-space: nowrap;
+    border-bottom: 1px solid #dde3ed;
+    position: sticky; top: 0; z-index: 1;
+  }
+  thead th.right { text-align: right; }
+  thead th.center { text-align: center; }
+  tbody tr {
+    border-bottom: 1px solid #eaeff6;
+    transition: background 0.15s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f0f5fd; }
+  tbody td { padding: 11px 14px; vertical-align: middle; }
+  td.right { text-align: right; }
+  td.center { text-align: center; }
+  .rank-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px; color: var(--text-muted);
+    width: 32px; text-align: center;
+  }
+  .rank-num.top3 { color: #c8860a; }
+  .badge-종별 {
+    display: inline-block;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 4px;
+    white-space: nowrap;
+  }
+  .badge-상급 { background: #fff3cc; color: var(--상급); border: 1px solid #e8c84a; }
+  .badge-종합 { background: #deeeff; color: var(--종합); border: 1px solid #90bbee; }
+  .badge-병원 { background: #d9f5e6; color: var(--병원); border: 1px solid #7acca0; }
+  .hosp-name { font-weight: 500; color: var(--text); max-width: 200px; }
+  .amount { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .util-bar { display: flex; align-items: center; gap: 8px; }
+  .util-track { flex: 1; min-width: 60px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .util-fill { height: 100%; border-radius: 3px; }
+  .util-val { font-size: 12px; font-variant-numeric: tabular-nums; width: 40px; text-align: right; }
+  .grade {
+    font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+    display: inline-block;
+  }
+  .grade-A { color: var(--grade-A); background: #d9f5e6; }
+  .grade-B { color: var(--grade-B); background: #deeeff; }
+  .grade-C { color: var(--grade-C); background: #fff3cc; }
+  .grade-D { color: var(--grade-D); background: #fde8ed; }
+
+  /* ── SECTION ── */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── EMPTY ── */
+  .empty { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .header { padding: 14px 16px 10px; }
+    .tab-nav, .filter-bar, .main { padding-left: 16px; padding-right: 16px; }
+    .header-kpi { display: none; }
+    .kpi-chip { display: none; }
+    tbody td, thead th { padding: 9px 10px; }
+    table { font-size: 12px; }
+    .hosp-name { max-width: 120px; }
+    .overview-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .anim { animation: fadeUp 0.35s ease both; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #eef2f7; }
+  ::-webkit-scrollbar-thumb { background: #c0cdd9; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="logo">thynC<sup style="font-size:0.45em;vertical-align:super;letter-spacing:0">™</sup> <span>계약현황 대시보드 &nbsp;2026년 03월 기준</span></div>
+      <div class="header-kpi" id="headerKpi"></div>
+    </div>
+    <div class="tab-nav">
+      <button class="tab-btn tab-overview active" onclick="switchTab('overview')">📋 전체 현황</button>
+      <button class="tab-btn tab-revenue" onclick="switchTab('revenue')">💰 매출 순위</button>
+      <button class="tab-btn tab-util"    onclick="switchTab('util')">⚡ 가동율 순위</button>
+      <button class="tab-btn tab-device"  onclick="switchTab('device')">🏥 병상수 순위</button>
+    </div>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-label">종별</span>
+  <button class="filter-btn active" data-filter="전체" onclick="setFilter('전체')">전체</button>
+  <button class="filter-btn" data-filter="상급" onclick="setFilter('상급')">상급종합병원</button>
+  <button class="filter-btn" data-filter="종합" onclick="setFilter('종합')">종합병원</button>
+  <button class="filter-btn" data-filter="병원" onclick="setFilter('병원')">병원</button>
+</div>
+
+<div class="main">
+  <div class="section active" id="sec-overview"></div>
+  <div class="section" id="sec-revenue"></div>
+  <div class="section" id="sec-util"></div>
+  <div class="section" id="sec-device"></div>
+</div>
+
+<script>
+const RAW = [{"종별":"종합","병원명":"분당제생병원","디바이스수":469,"월평균청구실제":205582036,"평균가동율":0.274,"월평균순수익":143907425,"평가":"C","예상회수기간":"4.1년"},{"종별":"종합","병원명":"의료법인양진의료재단 평택성모병원","디바이스수":359,"월평균청구실제":158316666,"평균가동율":0.2756,"월평균순수익":110821666,"평가":"C","예상회수기간":"3.6년"},{"종별":"종합","병원명":"추병원","디바이스수":171,"월평균청구실제":143423810,"평균가동율":0.5242,"월평균순수익":100396667,"평가":"B","예상회수기간":"2.2년"},{"종별":"종합","병원명":"김포우리병원","디바이스수":469,"월평균청구실제":127649166,"평균가동율":0.1701,"월평균순수익":89354416,"평가":"D","예상회수기간":"5.1년"},{"종별":"종합","병원명":"검단탑종합병원","디바이스수":280,"월평균청구실제":121543810,"평균가동율":0.2713,"월평균순수익":85080667,"평가":"C","예상회수기간":"3.5년"},{"종별":"종합","병원명":"청구성심병원","디바이스수":196,"월평균청구실제":117762223,"평균가동율":0.3755,"월평균순수익":82433556,"평가":"C","예상회수기간":"3.7년"},{"종별":"종합","병원명":"의료법인규웅의료재단(대청병원)","디바이스수":120,"월평균청구실제":107537776,"평균가동율":0.5601,"월평균순수익":75276443,"평가":"B","예상회수기간":"2.2년"},{"종별":"종합","병원명":"화순성심병원","디바이스수":150,"월평균청구실제":106705556,"평균가동율":0.4446,"월평균순수익":74693889,"평가":"B","예상회수기간":"2.4년"},{"종별":"종합","병원명":"의료법인명인의료재단(화홍병원)","디바이스수":191,"월평균청구실제":101328890,"평균가동율":0.3316,"월평균순수익":70930223,"평가":"C","예상회수기간":"4.6년"},{"종별":"종합","병원명":"제주한라병원","디바이스수":500,"월평균청구실제":95097500,"평균가동율":0.1189,"월평균순수익":66568250,"평가":"D","예상회수기간":"8.5년"},{"종별":"종합","병원명":"에스포항병원","디바이스수":120,"월평균청구실제":92561666,"평균가동율":0.4821,"월평균순수익":64793166,"평가":"B","예상회수기간":"2.9년"},{"종별":"종합","병원명":"세웅종합병원","디바이스수":100,"월평균청구실제":89123889,"평균가동율":0.557,"월평균순수익":62386722,"평가":"B","예상회수기간":"2.4년"},{"종별":"종합","병원명":"의료법인혜인의료재단한국병원","디바이스수":100,"월평균청구실제":86601110,"평균가동율":0.5413,"월평균순수익":60620777,"평가":"B","예상회수기간":"2.3년"},{"종별":"종합","병원명":"BHS한서병원","디바이스수":250,"월평균청구실제":79816190,"평균가동율":0.1995,"월평균순수익":55871333,"평가":"D","예상회수기간":"5.1년"},{"종별":"종합","병원명":"의료법인은성의료재단좋은선린병원","디바이스수":120,"월평균청구실제":71232500,"평균가동율":0.371,"월평균순수익":49862750,"평가":"C","예상회수기간":"3.3년"},{"종별":"종합","병원명":"광주한국병원","디바이스수":115,"월평균청구실제":68610000,"평균가동율":0.3729,"월평균순수익":48027000,"평가":"C","예상회수기간":"4.4년"},{"종별":"종합","병원명":"빌리브세웅병원","디바이스수":140,"월평균청구실제":67417500,"평균가동율":0.301,"월평균순수익":47192250,"평가":"C","예상회수기간":"3.8년"},{"종별":"병원","병원명":"의료법인백천의료재단 바로본병원","디바이스수":60,"월평균청구실제":66903333,"평균가동율":0.6969,"월평균순수익":46832333,"평가":"A","예상회수기간":"1.7년"},{"종별":"종합","병원명":"대전한국병원","디바이스수":253,"월평균청구실제":60992380,"평균가동율":0.1507,"월평균순수익":42694666,"평가":"D","예상회수기간":"6.7년"},{"종별":"종합","병원명":"의료법인한양의료재단","디바이스수":120,"월평균청구실제":60256666,"평균가동율":0.3138,"월평균순수익":42179666,"평가":"C","예상회수기간":"3.7년"},{"종별":"종합","병원명":"석경의료재단 센트럴병원","디바이스수":259,"월평균청구실제":59030000,"평균가동율":0.1424,"월평균순수익":41321000,"평가":"D","예상회수기간":"7.2년"},{"종별":"종합","병원명":"의료법인성지의료재단성지병원","디바이스수":130,"월평균청구실제":56875000,"평균가동율":0.2734,"월평균순수익":39812500,"평가":"C","예상회수기간":"4.3년"},{"종별":"종합","병원명":"예산명지병원","디바이스수":100,"월평균청구실제":55046666,"평균가동율":0.344,"월평균순수익":38532666,"평가":"C","예상회수기간":"3.1년"},{"종별":"종합","병원명":"김해복음병원","디바이스수":200,"월평균청구실제":53090000,"평균가동율":0.1659,"월평균순수익":37163000,"평가":"D","예상회수기간":"8.9년"},{"종별":"종합","병원명":"서산중앙병원","디바이스수":288,"월평균청구실제":52543333,"평균가동율":0.114,"월평균순수익":36780333,"평가":"D","예상회수기간":"9.1년"},{"종별":"종합","병원명":"운암한국병원","디바이스수":125,"월평균청구실제":44213333,"평균가동율":0.2211,"월평균순수익":30949333,"평가":"D","예상회수기간":"9.8년"},{"종별":"병원","병원명":"의료법인선덕의료재단대성병원","디바이스수":100,"월평균청구실제":42970000,"평균가동율":0.2686,"월평균순수익":30079000,"평가":"C","예상회수기간":"3.7년"},{"종별":"종합","병원명":"의료법인혜명심의료재단(울산병원)","디바이스수":112,"월평균청구실제":42613333,"평균가동율":0.2378,"월평균순수익":29829333,"평가":"D","예상회수기간":"6.5년"},{"종별":"병원","병원명":"의료법인백성의료재단안중백병원","디바이스수":60,"월평균청구실제":42540000,"평균가동율":0.4431,"월평균순수익":29778000,"평가":"B","예상회수기간":"2.8년"},{"종별":"상급","병원명":"원광대학교병원","디바이스수":255,"월평균청구실제":42500000,"평균가동율":0.1042,"월평균순수익":29750000,"평가":"D","예상회수기간":"10.2년"},{"종별":"종합","병원명":"학교법인동의병원","디바이스수":300,"월평균청구실제":40788333,"평균가동율":0.085,"월평균순수익":28551833,"평가":"D","예상회수기간":"14.6년"},{"종별":"종합","병원명":"의료법인목포구암의료재단(목포중앙병원)","디바이스수":264,"월평균청구실제":40675556,"평균가동율":0.0963,"월평균순수익":28472889,"평가":"D","예상회수기간":"14.7년"},{"종별":"종합","병원명":"목포기독병원","디바이스수":280,"월평균청구실제":39884666,"평균가동율":0.089,"월평균순수익":27919266,"평가":"D","예상회수기간":"11.1년"},{"종별":"종합","병원명":"천안리턴병원","디바이스수":48,"월평균청구실제":37951110,"평균가동율":0.4942,"월평균순수익":26565777,"평가":"B","예상회수기간":"2.1년"},{"종별":"종합","병원명":"당진종합병원","디바이스수":160,"월평균청구실제":36289166,"평균가동율":0.1418,"월평균순수익":25402416,"평가":"D","예상회수기간":"7.4년"},{"종별":"종합","병원명":"현대병원(아산)","디바이스수":84,"월평균청구실제":36010833,"평균가동율":0.2679,"월평균순수익":25207583,"평가":"C","예상회수기간":"3.7년"},{"종별":"종합","병원명":"한빛병원","디바이스수":99,"월평균청구실제":33698890,"평균가동율":0.2127,"월평균순수익":23589223,"평가":"D","예상회수기간":"6.1년"},{"종별":"종합","병원명":"씨엠병원","디바이스수":105,"월평균청구실제":33462223,"평균가동율":0.1992,"월평균순수익":23423556,"평가":"D","예상회수기간":"5.5년"},{"종별":"병원","병원명":"신일병원","디바이스수":50,"월평균청구실제":33002500,"평균가동율":0.4125,"월평균순수익":23101750,"평가":"C","예상회수기간":"3.4년"},{"종별":"병원","병원명":"서울노보스병원","디바이스수":130,"월평균청구실제":32375556,"평균가동율":0.1557,"월평균순수익":22662889,"평가":"D","예상회수기간":"7.6년"},{"종별":"병원","병원명":"고흥윤호21병원","디바이스수":70,"월평균청구실제":32361110,"평균가동율":0.2889,"월평균순수익":22652777,"평가":"B","예상회수기간":"3.0년"},{"종별":"종합","병원명":"아산충무병원","디바이스수":274,"월평균청구실제":31569999,"평균가동율":0.072,"월평균순수익":22098999,"평가":"D","예상회수기간":"16.3년"},{"종별":"종합","병원명":"의료법인온그룹의료재단온종합병원","디바이스수":39,"월평균청구실제":30839166,"평균가동율":0.4942,"월평균순수익":21587416,"평가":"B","예상회수기간":"2.5년"},{"종별":"종합","병원명":"의료법인영동의료재단 의정부백병원","디바이스수":100,"월평균청구실제":30739333,"평균가동율":0.1921,"월평균순수익":21517533,"평가":"D","예상회수기간":"5.5년"},{"종별":"병원","병원명":"부산본병원","디바이스수":30,"월평균청구실제":30326109,"평균가동율":0.6318,"월평균순수익":21228276,"평가":"B","예상회수기간":"2.3년"},{"종별":"종합","병원명":"서울성심병원","디바이스수":80,"월평균청구실제":29743333,"평균가동율":0.2324,"월평균순수익":20820333,"평가":"C","예상회수기간":"4.6년"},{"종별":"병원","병원명":"동탄시티병원","디바이스수":90,"월평균청구실제":29418666,"평균가동율":0.2043,"월평균순수익":20593066,"평가":"D","예상회수기간":"5.1년"},{"종별":"병원","병원명":"뿌리병원","디바이스수":49,"월평균청구실제":28123333,"평균가동율":0.3587,"월평균순수익":19686333,"평가":"D","예상회수기간":"5.4년"},{"종별":"종합","병원명":"메디인병원","디바이스수":30,"월평균청구실제":27110833,"평균가동율":0.5648,"월평균순수익":18977583,"평가":"C","예상회수기간":"3.6년"},{"종별":"종합","병원명":"동아병원","디바이스수":39,"월평균청구실제":26497776,"평균가동율":0.4246,"월평균순수익":18548443,"평가":"D","예상회수기간":"5.7년"},{"종별":"병원","병원명":"해븐리병원","디바이스수":117,"월평균청구실제":23430000,"평균가동율":0.1252,"월평균순수익":16401000,"평가":"D","예상회수기간":"12.5년"},{"종별":"종합","병원명":"새천년병원(경주)","디바이스수":40,"월평균청구실제":23157776,"평균가동율":0.3618,"월평균순수익":16210443,"평가":"C","예상회수기간":"3.1년"},{"종별":"병원","병원명":"문산중앙병원","디바이스수":48,"월평균청구실제":21835000,"평균가동율":0.2843,"월평균순수익":15284500,"평가":"D","예상회수기간":"8.1년"},{"종별":"병원","병원명":"사랑플러스병원","디바이스수":40,"월평균청구실제":20781110,"평균가동율":0.3247,"월평균순수익":14546777,"평가":"C","예상회수기간":"3.7년"},{"종별":"종합","병원명":"신촌연세병원","디바이스수":72,"월평균청구실제":20467500,"평균가동율":0.1777,"월평균순수익":14327250,"평가":"D","예상회수기간":"8.9년"},{"종별":"병원","병원명":"양주예쓰병원","디바이스수":100,"월평균청구실제":16666666,"평균가동율":0.1042,"월평균순수익":11666666,"평가":"D","예상회수기간":"9.6년"},{"종별":"종합","병원명":"여주새로운병원","디바이스수":40,"월평균청구실제":16482000,"평균가동율":0.2575,"월평균순수익":11537400,"평가":"C","예상회수기간":"4.8년"},{"종별":"종합","병원명":"서울산보람병원","디바이스수":30,"월평균청구실제":15506666,"평균가동율":0.3231,"월평균순수익":10854666,"평가":"D","예상회수기간":"5.2년"},{"종별":"병원","병원명":"수성한미병원","디바이스수":30,"월평균청구실제":13450833,"평균가동율":0.2802,"월평균순수익":9415583,"평가":"D","예상회수기간":"5.2년"},{"종별":"병원","병원명":"건양대부여병원","디바이스수":40,"월평균청구실제":12566666,"평균가동율":0.1964,"월평균순수익":8796666,"평가":"D","예상회수기간":"6.3년"},{"종별":"종합","병원명":"KS병원","디바이스수":30,"월평균청구실제":11913333,"평균가동율":0.2482,"월평균순수익":8339333,"평가":"D","예상회수기간":"5.8년"},{"종별":"병원","병원명":"광주시원병원","디바이스수":30,"월평균청구실제":11826666,"평균가동율":0.2464,"월평균순수익":8278666,"평가":"D","예상회수기간":"7.6년"},{"종별":"종합","병원명":"안동복주회복병원","디바이스수":210,"월평균청구실제":11496666,"평균가동율":0.0342,"월평균순수익":8047666,"평가":"D","예상회수기간":"54.5년"},{"종별":"종합","병원명":"부평세림병원","디바이스수":52,"월평균청구실제":10438333,"평균가동율":0.1255,"월평균순수익":7306833,"평가":"D","예상회수기간":"11.2년"},{"종별":"종합","병원명":"새통영병원","디바이스수":104,"월평균청구실제":10243333,"평균가동율":0.0616,"월평균순수익":7170333,"평가":"D","예상회수기간":"21.8년"},{"종별":"종합","병원명":"중앙대광명병원","디바이스수":12,"월평균청구실제":8573333,"평균가동율":0.4465,"월평균순수익":6001333,"평가":"C","예상회수기간":"3.8년"},{"종별":"상급","병원명":"서울대학교병원 (임상시험센터)","디바이스수":30,"월평균청구실제":8140000,"평균가동율":0.1696,"월평균순수익":5698000,"평가":"D","예상회수기간":"6.8년"},{"종별":"병원","병원명":"원주센텀병원","디바이스수":30,"월평균청구실제":6292223,"평균가동율":0.1311,"월평균순수익":4404556,"평가":"D","예상회수기간":"10.3년"},{"종별":"종합","병원명":"연세에스병원","디바이스수":40,"월평균청구실제":5333333,"평균가동율":0.0833,"월평균순수익":3733333,"평가":"D","예상회수기간":"18.5년"},{"종별":"종합","병원명":"남양주21세기병원","디바이스수":29,"월평균청구실제":5120666,"평균가동율":0.1104,"월평균순수익":3584466,"평가":"D","예상회수기간":"11.2년"},{"종별":"종합","병원명":"장튼위튼병원","디바이스수":30,"월평균청구실제":5000000,"평균가동율":0.1042,"월평균순수익":3500000,"평가":"D","예상회수기간":"12.4년"},{"종별":"병원","병원명":"김해굿모닝병원","디바이스수":60,"월평균청구실제":4266666,"평균가동율":0.0444,"월평균순수익":2986666,"평가":"D","예상회수기간":"37.0년"},{"종별":"종합","병원명":"녹동현대병원","디바이스수":100,"월평균청구실제":4246666,"평균가동율":0.0265,"월평균순수익":2972666,"평가":"D","예상회수기간":"43.2년"},{"종별":"종합","병원명":"추새로병원","디바이스수":30,"월평균청구실제":3543333,"평균가동율":0.0738,"월평균순수익":2480333,"평가":"D","예상회수기간":"18.2년"},{"종별":"종합","병원명":"빛가람종합병원","디바이스수":80,"월평균청구실제":0,"평균가동율":0.0,"월평균순수익":0,"평가":"D","예상회수기간":"-"},{"종별":"종합","병원명":"미라클병원","디바이스수":50,"월평균청구실제":0,"평균가동율":0.0,"월평균순수익":0,"평가":"D","예상회수기간":"-"},{"종별":"병원","병원명":"광주21세기병원","디바이스수":56,"월평균청구실제":0,"평균가동율":0.0,"월평균순수익":0,"평가":"D","예상회수기간":"-"},{"종별":"병원","병원명":"담양사랑병원","디바이스수":35,"월평균청구실제":0,"평균가동율":0.0,"월평균순수익":0,"평가":"D","예상회수기간":"-"},{"종별":"병원","병원명":"광주열린병원","디바이스수":120,"월평균청구실제":0,"평균가동율":0.0,"월평균순수익":0,"평가":"D","예상회수기간":"-"},{"종별":"병원","병원명":"곡성사랑병원","디바이스수":30,"월평균청구실제":0,"평균가동율":0.0,"월평균순수익":0,"평가":"D","예상회수기간":"-"}];
+
+const DEV_DATA = [{"종별": "종합", "병원명": "제주한라병원", "디바이스수": 500}, {"종별": "종합", "병원명": "분당제생병원", "디바이스수": 469}, {"종별": "종합", "병원명": "김포우리병원", "디바이스수": 469}, {"종별": "상급", "병원명": "한양대학교병원", "디바이스수": 370}, {"종별": "종합", "병원명": "의료법인양진의료재단 평택성모병원", "디바이스수": 359}, {"종별": "상급", "병원명": "아주대학교의료원", "디바이스수": 342}, {"종별": "상급", "병원명": "화순전남대학교병원", "디바이스수": 341}, {"종별": "종합", "병원명": "학교법인동의병원", "디바이스수": 300}, {"종별": "종합", "병원명": "서산중앙병원", "디바이스수": 288}, {"종별": "종합", "병원명": "검단탑종합병원", "디바이스수": 280}, {"종별": "종합", "병원명": "목포기독병원", "디바이스수": 280}, {"종별": "종합", "병원명": "아산충무병원", "디바이스수": 274}, {"종별": "종합", "병원명": "의료법인목포구암의료재단(목포중앙병원)", "디바이스수": 264}, {"종별": "종합", "병원명": "석경의료재단 센트럴병원", "디바이스수": 259}, {"종별": "상급", "병원명": "동아대학교병원", "디바이스수": 257}, {"종별": "상급", "병원명": "원광대학교병원", "디바이스수": 255}, {"종별": "종합", "병원명": "대전한국병원", "디바이스수": 253}, {"종별": "종합", "병원명": "BHS한서병원", "디바이스수": 250}, {"종별": "종합", "병원명": "명지성모병원", "디바이스수": 212}, {"종별": "종합", "병원명": "안동복주회복병원", "디바이스수": 210}, {"종별": "종합", "병원명": "김해복음병원", "디바이스수": 200}, {"종별": "종합", "병원명": "(재)예수병원유지재단", "디바이스수": 200}, {"종별": "종합", "병원명": "가톨릭대학교 부천성모병원", "디바이스수": 200}, {"종별": "종합", "병원명": "좋은강안병원", "디바이스수": 200}, {"종별": "종합", "병원명": "청구성심병원", "디바이스수": 196}, {"종별": "상급", "병원명": "순천향대학교부속부천병원", "디바이스수": 192}, {"종별": "종합", "병원명": "의료법인명인의료재단(화홍병원)", "디바이스수": 191}, {"종별": "종합", "병원명": "의료법인센텀의료재단 부산센텀병원 (센텀종합병원)", "디바이스수": 177}, {"종별": "종합", "병원명": "루가의료재단 나은병원", "디바이스수": 172}, {"종별": "종합", "병원명": "추병원", "디바이스수": 171}, {"종별": "종합", "병원명": "당진종합병원", "디바이스수": 160}, {"종별": "종합", "병원명": "빌리브세웅병원", "디바이스수": 150}, {"종별": "종합", "병원명": "화순성심병원", "디바이스수": 150}, {"종별": "병원", "병원명": "인천가톨릭관동대학교 국제성모병원", "디바이스수": 137}, {"종별": "종합", "병원명": "여수제일병원", "디바이스수": 131}, {"종별": "병원", "병원명": "서울노보스병원", "디바이스수": 130}, {"종별": "종합", "병원명": "의료법인성지의료재단성지병원", "디바이스수": 130}, {"종별": "종합", "병원명": "운암한국병원", "디바이스수": 125}, {"종별": "병원", "병원명": "강일병원", "디바이스수": 124}, {"종별": "종합", "병원명": "의료법인한양의료재단", "디바이스수": 120}, {"종별": "종합", "병원명": "의료법인은성의료재단좋은선린병원", "디바이스수": 120}, {"종별": "종합", "병원명": "의료법인규웅의료재단(대청병원)", "디바이스수": 120}, {"종별": "종합", "병원명": "에스포항병원", "디바이스수": 120}, {"종별": "종합", "병원명": "갑을장유병원", "디바이스수": 120}, {"종별": "병원", "병원명": "광주열린병원", "디바이스수": 120}, {"종별": "병원", "병원명": "해븐리병원", "디바이스수": 117}, {"종별": "종합", "병원명": "광주한국병원", "디바이스수": 115}, {"종별": "종합", "병원명": "의료법인혜명심의료재단(울산병원)", "디바이스수": 112}, {"종별": "병원", "병원명": "나눔과행복병원", "디바이스수": 110}, {"종별": "종합", "병원명": "씨엠병원", "디바이스수": 105}, {"종별": "종합", "병원명": "새통영병원", "디바이스수": 104}, {"종별": "종합", "병원명": "예산명지병원", "디바이스수": 100}, {"종별": "종합", "병원명": "세웅종합병원", "디바이스수": 100}, {"종별": "종합", "병원명": "의료법인혜인의료재단한국병원", "디바이스수": 100}, {"종별": "종합", "병원명": "해남종합병원", "디바이스수": 100}, {"종별": "종합", "병원명": "의료법인영동의료재단 의정부백병원", "디바이스수": 100}, {"종별": "병원", "병원명": "양주예쓰병원", "디바이스수": 100}, {"종별": "병원", "병원명": "의료법인선덕의료재단대성병원", "디바이스수": 100}, {"종별": "병원", "병원명": "의료법인대아의료재단 한도병원", "디바이스수": 100}, {"종별": "종합", "병원명": "녹동현대병원", "디바이스수": 100}, {"종별": "종합", "병원명": "엘병원", "디바이스수": 100}, {"종별": "병원", "병원명": "의료법인일심의료재단 포천우리병원", "디바이스수": 100}, {"종별": "종합", "병원명": "한빛병원", "디바이스수": 99}, {"종별": "종합", "병원명": "의료법인은성의료재단 좋은삼정병원", "디바이스수": 98}, {"종별": "종합", "병원명": "비에스종합병원", "디바이스수": 92}, {"종별": "병원", "병원명": "동탄시티병원", "디바이스수": 90}, {"종별": "병원", "병원명": "광주365재활병원", "디바이스수": 90}, {"종별": "병원", "병원명": "대구예스병원", "디바이스수": 90}, {"종별": "종합", "병원명": "현대병원(아산)", "디바이스수": 84}, {"종별": "종합", "병원명": "인천백병원", "디바이스수": 80}, {"종별": "종합", "병원명": "서울성심병원", "디바이스수": 80}, {"종별": "종합", "병원명": "빛가람종합병원", "디바이스수": 80}, {"종별": "종합", "병원명": "광주센트럴병원", "디바이스수": 76}, {"종별": "종합", "병원명": "신촌연세병원", "디바이스수": 72}, {"종별": "병원", "병원명": "고흥윤호21병원", "디바이스수": 70}, {"종별": "병원", "병원명": "서울에이스병원", "디바이스수": 70}, {"종별": "병원", "병원명": "거인병원", "디바이스수": 70}, {"종별": "종합", "병원명": "부산부민병원", "디바이스수": 70}, {"종별": "병원", "병원명": "서부산센텀병원", "디바이스수": 70}, {"종별": "종합", "병원명": "해동병원", "디바이스수": 64}, {"종별": "병원", "병원명": "문산중앙병원", "디바이스수": 60}, {"종별": "병원", "병원명": "의료법인백천의료재단 바로본병원", "디바이스수": 60}, {"종별": "병원", "병원명": "의료법인백성의료재단안중백병원", "디바이스수": 60}, {"종별": "종합", "병원명": "의료법인영문의료재단 다보스병원", "디바이스수": 60}, {"종별": "병원", "병원명": "김해굿모닝병원", "디바이스수": 60}, {"종별": "종합", "병원명": "더필병원", "디바이스수": 60}, {"종별": "로컬", "병원명": "영암한국병원", "디바이스수": 60}, {"종별": "병원", "병원명": "목포효성요양병원", "디바이스수": 60}, {"종별": "병원", "병원명": "부산백병원", "디바이스수": 58}, {"종별": "병원", "병원명": "광주21세기병원", "디바이스수": 56}, {"종별": "상급", "병원명": "인제대학교 해운대백병원", "디바이스수": 55}, {"종별": "종합", "병원명": "부평세림병원", "디바이스수": 52}, {"종별": "종합", "병원명": "다니엘병원", "디바이스수": 52}, {"종별": "병원", "병원명": "청담해리슨병원", "디바이스수": 51}, {"종별": "병원", "병원명": "신일병원", "디바이스수": 50}, {"종별": "로컬", "병원명": "새손병원", "디바이스수": 50}, {"종별": "종합", "병원명": "미라클병원", "디바이스수": 50}, {"종별": "종합", "병원명": "해남우리병원", "디바이스수": 50}, {"종별": "상급", "병원명": "한림대학교동탄성심병원", "디바이스수": 50}, {"종별": "병원", "병원명": "서일의료재단 기장병원", "디바이스수": 50}, {"종별": "병원", "병원명": "혜민병원", "디바이스수": 50}, {"종별": "병원", "병원명": "뿌리병원", "디바이스수": 49}, {"종별": "종합", "병원명": "천안리턴병원", "디바이스수": 48}, {"종별": "종합", "병원명": "더자인병원", "디바이스수": 45}, {"종별": "병원", "병원명": "부안성모병원", "디바이스수": 44}, {"종별": "병원", "병원명": "석촌의료재단성주무강병원", "디바이스수": 43}, {"종별": "병원", "병원명": "양평병원", "디바이스수": 40}, {"종별": "상급", "병원명": "강릉아산병원", "디바이스수": 40}, {"종별": "종합", "병원명": "익산병원", "디바이스수": 40}, {"종별": "종합", "병원명": "화순고려병원", "디바이스수": 40}, {"종별": "병원", "병원명": "사랑플러스병원", "디바이스수": 40}, {"종별": "종합", "병원명": "여주새로운병원", "디바이스수": 40}, {"종별": "종합", "병원명": "영동병원", "디바이스수": 40}, {"종별": "종합", "병원명": "연세에스병원", "디바이스수": 40}, {"종별": "종합", "병원명": "새천년병원(경주)", "디바이스수": 40}, {"종별": "병원", "병원명": "건양대부여병원", "디바이스수": 40}, {"종별": "종합", "병원명": "전주고려병원", "디바이스수": 40}, {"종별": "종합", "병원명": "MS재건병원", "디바이스수": 40}, {"종별": "병원", "병원명": "다솜요양병원", "디바이스수": 40}, {"종별": "병원", "병원명": "씨엔씨재활병원", "디바이스수": 40}, {"종별": "병원", "병원명": "씨엔씨푸른병원", "디바이스수": 40}, {"종별": "종합", "병원명": "의료법인온그룹의료재단온종합병원", "디바이스수": 39}, {"종별": "종합", "병원명": "동아병원", "디바이스수": 39}, {"종별": "상급", "병원명": "삼성서울병원 (순환기)", "디바이스수": 39}, {"종별": "종합", "병원명": "해피뷰병원", "디바이스수": 37}, {"종별": "병원", "병원명": "담양사랑병원", "디바이스수": 35}, {"종별": "종합", "병원명": "춘천성심병원", "디바이스수": 30}, {"종별": "병원", "병원명": "미래한국병원", "디바이스수": 30}, {"종별": "종합", "병원명": "광주병원", "디바이스수": 30}, {"종별": "종합", "병원명": "무안종합병원", "디바이스수": 30}, {"종별": "종합", "병원명": "효심의료재단 용인서울병원", "디바이스수": 30}, {"종별": "종합", "병원명": "메디인병원", "디바이스수": 30}, {"종별": "병원", "병원명": "부산본병원", "디바이스수": 30}, {"종별": "종합", "병원명": "서울산보람병원", "디바이스수": 30}, {"종별": "종합", "병원명": "이화여대부속서울병원", "디바이스수": 30}, {"종별": "종합", "병원명": "광주현대병원", "디바이스수": 30}, {"종별": "병원", "병원명": "수성한미병원", "디바이스수": 30}, {"종별": "병원", "병원명": "광주시원병원", "디바이스수": 30}, {"종별": "상급", "병원명": "서울대학교병원 (임상시험센터)", "디바이스수": 30}, {"종별": "종합", "병원명": "장튼위튼병원", "디바이스수": 30}, {"종별": "병원", "병원명": "원주센텀병원", "디바이스수": 30}, {"종별": "종합", "병원명": "더퍼스트병원", "디바이스수": 30}, {"종별": "종합", "병원명": "하남S병원", "디바이스수": 30}, {"종별": "종합", "병원명": "KS병원", "디바이스수": 30}, {"종별": "종합", "병원명": "성지의료재단 제천성지병원", "디바이스수": 30}, {"종별": "종합", "병원명": "추새로병원", "디바이스수": 30}, {"종별": "병원", "병원명": "원주 정병원", "디바이스수": 30}, {"종별": "병원", "병원명": "홍익병원", "디바이스수": 30}, {"종별": "병원", "병원명": "분당베스트병원", "디바이스수": 30}, {"종별": "종합", "병원명": "척편한병원", "디바이스수": 30}, {"종별": "종합", "병원명": "새동산병원", "디바이스수": 30}, {"종별": "병원", "병원명": "의료법인남촌의료재단 시화병원", "디바이스수": 30}, {"종별": "종합", "병원명": "의료법인의인의료재단 차병원", "디바이스수": 30}, {"종별": "병원", "병원명": "성모윌병원", "디바이스수": 30}, {"종별": "로컬", "병원명": "연세오케이정형외과", "디바이스수": 30}, {"종별": "병원", "병원명": "곡성사랑병원", "디바이스수": 30}, {"종별": "종합", "병원명": "의산의료재단 강릉고려병원", "디바이스수": 30}, {"종별": "종합", "병원명": "남양주21세기병원", "디바이스수": 29}, {"종별": "로컬", "병원명": "박철홍정형외과", "디바이스수": 29}, {"종별": "종합", "병원명": "의료법인해민의료재단 (세안종합)", "디바이스수": 20}, {"종별": "종합", "병원명": "신가병원", "디바이스수": 20}, {"종별": "병원", "병원명": "용인제일메디병원", "디바이스수": 20}, {"종별": "병원", "병원명": "동수원병원", "디바이스수": 20}, {"종별": "종합", "병원명": "대구수성메트로병원(춘곡의료재단)", "디바이스수": 20}, {"종별": "상급", "병원명": "카톨릭병원(대구가톨릭대학교병원)", "디바이스수": 20}, {"종별": "종합", "병원명": "가은의료재단혁신성모병원", "디바이스수": 20}, {"종별": "상급", "병원명": "(의)삼성의료재단(강북삼성병원)", "디바이스수": 18}, {"종별": "종합", "병원명": "의료법인건명의료재단중앙제일병원", "디바이스수": 18}, {"종별": "종합", "병원명": "순천에스병원", "디바이스수": 15}, {"종별": "병원", "병원명": "중앙메디컬병원", "디바이스수": 15}, {"종별": "종합", "병원명": "원주센트럴병원", "디바이스수": 12}, {"종별": "종합", "병원명": "중앙대광명병원", "디바이스수": 12}, {"종별": "종합", "병원명": "광주씨티병원", "디바이스수": 10}, {"종별": "상급", "병원명": "(의료)길의료재단 (길병원)", "디바이스수": 10}, {"종별": "병원", "병원명": "일산백병원", "디바이스수": 10}, {"종별": "로컬", "병원명": "서울아동병원", "디바이스수": 8}, {"종별": "상급", "병원명": "삼성서울병원", "디바이스수": 2}];
+
+let currentTab = 'overview';
+let currentFilter = '전체';
+
+const fmtAmt = v => v === 0 ? '-' : (v >= 100000000
+  ? (v/100000000).toFixed(1)+'억'
+  : (v/10000).toFixed(0)+'만')+'원';
+const fmtAmtFull = v => v === 0 ? '-' : v.toLocaleString()+'원';
+const fmtPct  = v => v === 0 ? '-' : (v*100).toFixed(1)+'%';
+const fmtNum  = v => v.toLocaleString();
+
+function getFiltered() {
+  if (currentFilter === '전체') return RAW;
+  return RAW.filter(d => d.종별 === currentFilter);
+}
+
+function utilColor(v) {
+  if (v >= 0.5) return 'var(--green)';
+  if (v >= 0.3) return 'var(--accent)';
+  if (v >= 0.15) return 'var(--gold)';
+  return 'var(--red)';
+}
+
+// ── HEADER KPI ──
+function renderHeaderKpi() {
+  const totalHosp = DEV_DATA.length;
+  const totalDev = DEV_DATA.reduce((a,b)=>a+b.디바이스수,0);
+  const totalRev = RAW.reduce((a,b)=>a+b.월평균청구실제,0);
+  const avgUtil = RAW.reduce((a,b)=>a+b.평균가동율,0)/RAW.length;
+  document.getElementById('headerKpi').innerHTML = `
+    <div class="kpi-chip"><strong>${totalHosp}개</strong>계약 병원</div>
+    <div class="kpi-chip"><strong>${fmtNum(totalDev)}</strong>총 병상수</div>
+    <div class="kpi-chip"><strong>${fmtAmt(totalRev)}</strong>월평균청구 합계</div>
+    <div class="kpi-chip" id="utilChip" onclick="toggleUtil()" title="클릭하여 확인" style="cursor:pointer;user-select:none;border-style:dashed;">
+      <strong id="utilVal" style="filter:blur(6px);transition:filter 0.35s">${fmtPct(avgUtil)}</strong>평균 가동율 &nbsp;<span id="utilIcon">🔒</span>
+    </div>
+  `;
+}
+
+// ── OVERVIEW ──
+function getDevFiltered() {
+  if (currentFilter === '전체') return DEV_DATA;
+  return DEV_DATA.filter(d => d.종별 === currentFilter);
+}
+
+function renderOverview() {
+  const devData = DEV_DATA;
+  const ZONES = currentFilter === '전체' ? ['상급','종합','병원','로컬'] : [currentFilter];
+  const OV_KEYS = currentFilter === '전체' ? ['전체','상급','종합','병원','로컬'] : [currentFilter];
+
+  // Stats: hospital count + device sum per 종별
+  const zoneStat = (z) => {
+    const g = z === '전체' ? devData : devData.filter(d=>d.종별===z);
+    return { count: g.length, devices: g.reduce((a,b)=>a+b.디바이스수,0) };
+  };
+
+  const clsMap = {전체:'total',상급:'sang',종합:'jong',병원:'byung',로컬:'local'};
+  const cards = OV_KEYS.map(k => {
+    const s = zoneStat(k);
+    const cls = clsMap[k] || 'byung';
+    return `<div class="ov-card ${cls}">
+      <div class="ov-label">${k==='전체'?'전체 합계':k}</div>
+      <div class="ov-count"><strong>${s.count}</strong> 개 병원</div>
+      <div class="ov-sub">
+        <span><span>총 병상수</span><em>${fmtNum(s.devices)} 병상</em></span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Device bar chart by 종별
+  const totalDev = zoneStat('전체').devices || 1;
+  const devBars = ZONES.map(k => {
+    const val = zoneStat(k).devices;
+    const pct = (val/totalDev*100).toFixed(1);
+    const clr = k==='로컬'?'#9ca3af':`var(--${k})`;
+    return `<div class="bar-row">
+      <div class="bar-label">${k}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${clr}"></div></div>
+      <div class="bar-val">${fmtNum(val)} 병상 (${pct}%)</div>
+    </div>`;
+  }).join('');
+
+  // Hospital count bar
+  const totalHosp = zoneStat('전체').count || 1;
+  const hospBars = ZONES.map(k => {
+    const val = zoneStat(k).count;
+    const pct = (val/totalHosp*100).toFixed(1);
+    const clr = k==='로컬'?'#9ca3af':`var(--${k})`;
+    return `<div class="bar-row">
+      <div class="bar-label">${k}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${clr}"></div></div>
+      <div class="bar-val">${val}개 (${pct}%)</div>
+    </div>`;
+  }).join('');
+
+  // 판매모델 breakdown from DEV_DATA rows — but we only have unique hosp data
+  // Show top hospitals table snippet
+  const filtered = getDevFiltered().slice().sort((a,b)=>b.디바이스수-a.디바이스수).slice(0,10);
+  const topRows = filtered.map((d,i)=>`
+    <tr>
+      <td class="center"><div class="rank-num ${i<3?'top3':''}">${i+1}</div></td>
+      <td class="center"><span class="badge-종별 badge-${d.종별}">${d.종별}</span></td>
+      <td><div class="hosp-name">${d.병원명}</div></td>
+      <td class="right">${fmtNum(d.디바이스수)}</td>
+    </tr>`).join('');
+
+  document.getElementById('sec-overview').innerHTML = `
+    <div class="overview-grid anim">${cards}</div>
+    <div class="overview-charts anim">
+      <div class="chart-card">
+        <div class="chart-title">🏥 종별 병상수 비중</div>
+        ${devBars}
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">🏨 종별 병원 수 비중</div>
+        ${hospBars}
+      </div>
+    </div>
+    <div class="chart-card anim" style="margin-bottom:0">
+      <div class="chart-title">🔝 병상수 상위 병원 (Top 10)</div>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th class="center" style="width:44px">순위</th><th class="center">종별</th><th>병원명</th><th class="right">병상수</th></tr></thead>
+          <tbody>${topRows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ── RANK TABLE ──
+function renderRankTable(secId, sortKey, title, colDefs) {
+  const data = [...getFiltered()].sort((a,b) => b[sortKey] - a[sortKey]);
+  const maxVal = data[0]?.[sortKey] || 1;
+
+  const rows = data.map((d, i) => {
+    const rank = i+1;
+    const rankCls = rank <= 3 ? 'top3' : '';
+    const utilPct = (d.평균가동율 * 100).toFixed(1);
+    const gradeCls = `grade-${d.평가}`;
+    const utilW = (d.평균가동율 / 1 * 100).toFixed(1);
+    const barW = (d[sortKey] / maxVal * 100).toFixed(1);
+
+    const cells = colDefs.map(col => {
+      if (col.key === '_rank') return `<td class="center"><div class="rank-num ${rankCls}">${rank}</div></td>`;
+      if (col.key === '종별') return `<td class="center"><span class="badge-종별 badge-${d.종별}">${d.종별}</span></td>`;
+      if (col.key === '병원명') return `<td><div class="hosp-name">${d.병원명}</div></td>`;
+      if (col.key === '월평균청구실제') return `<td class="right amount" style="color:${d.월평균청구실제===0?'var(--text-muted)':'var(--text)'}">${fmtAmtFull(d.월평균청구실제)}</td>`;
+      if (col.key === '월평균청구실제_bar') return `<td><div class="util-bar"><div class="util-track"><div class="util-fill" style="width:${barW}%;background:var(--accent)"></div></div><div class="util-val" style="color:var(--accent)">${fmtAmt(d.월평균청구실제)}</div></div></td>`;
+      if (col.key === '평균가동율') return `<td><div class="util-bar"><div class="util-track"><div class="util-fill" style="width:${utilW}%;background:${utilColor(d.평균가동율)}"></div></div><div class="util-val" style="color:${utilColor(d.평균가동율)}">${fmtPct(d.평균가동율)}</div></div></td>`;
+      if (col.key === '디바이스수') return `<td class="right">${fmtNum(d.디바이스수)}</td>`;
+      if (col.key === '디바이스수_bar') return `<td><div class="util-bar"><div class="util-track"><div class="util-fill" style="width:${barW}%;background:#a78bfa"></div></div><div class="util-val" style="color:#a78bfa">${fmtNum(d.디바이스수)}</div></div></td>`;
+      if (col.key === '월평균순수익') return `<td class="right" style="color:var(--green)">${fmtAmt(d.월평균순수익)}</td>`;
+      if (col.key === '평가') return `<td class="center"><span class="grade ${gradeCls}">${d.평가}</span></td>`;
+      if (col.key === '예상회수기간') return `<td class="center" style="color:var(--text-muted);font-size:12px">${d.예상회수기간}</td>`;
+      return `<td>${d[col.key]||'-'}</td>`;
+    }).join('');
+
+    return `<tr>${cells}</tr>`;
+  }).join('');
+
+  const ths = colDefs.map(c => `<th class="${c.align||''}">${c.label}</th>`).join('');
+
+  document.getElementById(secId).innerHTML = `
+    <div class="table-header anim">
+      <div class="table-title">${title}</div>
+      <div class="table-count">총 ${data.length}개 병원</div>
+    </div>
+    <div class="table-wrap anim">
+      <table>
+        <thead><tr>${ths}</tr></thead>
+        <tbody>${rows || '<tr><td colspan="10" class="empty">데이터 없음</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderRevenue() {
+  renderRankTable('sec-revenue', '월평균청구실제', '💰 월평균청구실제 기준 매출 순위', [
+    {key:'_rank', label:'순위', align:'center'},
+    {key:'종별', label:'종별', align:'center'},
+    {key:'병원명', label:'병원명'},
+    {key:'디바이스수', label:'디바이스수', align:'right'},
+    {key:'월평균청구실제', label:'월평균청구실제', align:'right'},
+    {key:'월평균순수익', label:'월평균순수익', align:'right'},
+    {key:'평균가동율', label:'평균가동율'},
+  ]);
+}
+
+function renderUtil() {
+  renderRankTable('sec-util', '평균가동율', '⚡ 평균가동율 기준 순위', [
+    {key:'_rank', label:'순위', align:'center'},
+    {key:'종별', label:'종별', align:'center'},
+    {key:'병원명', label:'병원명'},
+    {key:'디바이스수', label:'디바이스수', align:'right'},
+    {key:'평균가동율', label:'평균가동율'},
+    {key:'월평균청구실제', label:'월평균청구실제', align:'right'},
+    {key:'월평균순수익', label:'월평균순수익', align:'right'},
+  ]);
+}
+
+function renderDevice() {
+  const data = [...getDevFiltered()].sort((a,b) => b.디바이스수 - a.디바이스수);
+  const maxVal = data[0]?.디바이스수 || 1;
+  const rows = data.map((d,i) => {
+    const rank = i+1;
+    const barW = (d.디바이스수/maxVal*100).toFixed(1);
+    return `<tr>
+      <td class="center"><div class="rank-num ${rank<=3?'top3':''}">${rank}</div></td>
+      <td class="center"><span class="badge-종별 badge-${d.종별}">${d.종별}</span></td>
+      <td><div class="hosp-name">${d.병원명}</div></td>
+      <td><div class="util-bar"><div class="util-track"><div class="util-fill" style="width:${barW}%;background:#7c5cbf"></div></div><div class="util-val" style="color:#7c5cbf;width:50px">${fmtNum(d.디바이스수)}</div></div></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('sec-device').innerHTML = `
+    <div class="table-header anim">
+      <div class="table-title">🏥 도입 병상수 기준 순위</div>
+      <div class="table-count">총 ${data.length}개 병원</div>
+    </div>
+    <div class="table-wrap anim">
+      <table>
+        <thead><tr><th class="center" style="width:44px">순위</th><th class="center" style="width:80px">종별</th><th>병원명</th><th>도입 병상수</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="4" class="empty">데이터 없음</td></tr>'}</tbody>
+      </table>
+    </div>`;
+}
+
+
+let _utilVisible = false;
+function toggleUtil() {
+  _utilVisible = !_utilVisible;
+  const val = document.getElementById('utilVal');
+  const chip = document.getElementById('utilChip');
+  const icon = document.getElementById('utilIcon');
+  if (!val) return;
+  val.style.filter = _utilVisible ? 'blur(0px)' : 'blur(6px)';
+  chip.style.borderStyle = _utilVisible ? 'solid' : 'dashed';
+  chip.title = _utilVisible ? '클릭하여 숨기기' : '클릭하여 확인';
+  if (icon) icon.textContent = _utilVisible ? '👁' : '🔒';
+}
+
+function renderAll() {
+  if (currentTab === 'overview') renderOverview();
+  else if (currentTab === 'revenue') renderRevenue();
+  else if (currentTab === 'util') renderUtil();
+  else if (currentTab === 'device') renderDevice();
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.tab-${tab}`).classList.add('active');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-'+tab).classList.add('active');
+  renderAll();
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === f);
+  });
+  renderAll();
+}
+
+// init
+renderHeaderKpi();
+renderOverview();
+</script>
+</body>
+</html>
